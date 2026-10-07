@@ -1,0 +1,30 @@
+---
+title: "Homework 2"
+output: github_document
+date: "2026-10-06"
+---
+
+```{r setup}
+library(tidyverse)
+```
+```{r read_csv}
+nytransit_df = read_csv(file = "data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
+                                na = c("", "NA", "."),#imports data
+                                col_types = cols(`entry` = col_logical()
+                                                 ))
+
+names(nytransit_df)#overview of all variables
+
+nytransit_df = janitor::clean_names(nytransit_df)#convert to snake case
+names(nytransit_df)#checks if above line ran properly
+```
+```{r checking_data}
+nytransit_df
+```
+```{r select}
+select(line, station_name, station_latitude, station_longtitude
+
+
+
+
+
