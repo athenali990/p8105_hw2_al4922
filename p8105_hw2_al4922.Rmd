@@ -71,19 +71,21 @@ ada_stations <- nytransit_df |>
 
 ada_stations
 
-nytransit_df |> 
+prop_entrance <- nytransit_df |> 
   filter(vending == "NO") |> 
   summarize(mean(entry))
+
+prop_entrance
 ```
 **Answer the following questions with step 3:**
 How many distinct stations are there? 
-There are 465 distinct stations.
+There are `r distinct_stations` distinct stations.
 
 How many stations are ADA compliant?
-84 stations are ADA compliant.
+`r ada_stations`stations are ADA compliant.
 
 What proportion of station entrances / exits without vending allow entrance?
-About 0.3770 or 37.70% of station entrances/exits without vending allow entrance. 
+About `r prop_entrance` of station entrances/exits without vending allow entrance. 
 
 **Step 4: data reformatting**
 ```{r reformat}
@@ -203,6 +205,31 @@ gwynnda_cigs
 This new dataset is `r nrow(tw_tidy)`rows by `r ncol(tw_tidy)` columns and contains `r nrow(tw_tidy)` observations across the three trash wheels. Some key variables would be 'homes powered', 'weight' and 'volume' of trash. For available data, total weight of trash collected by professor trash wheel is `r prof_weight` and the total number of cigarette butts collected by Gwynnda in June of 2022 is `r gwynnda_cigs`.
 
 ### Problem 3
+**Step 1: Import and Clean Dataset**
+```{r read_csvmci}
+##Import, clean, and tidy the dataset of baseline demographics. Ensure that sex and APOE4 carrier status are appropriate encoded (i.e. not numeric), and remove any participants who do not meet the stated inclusion criteria (i.e. no MCI at baseline). (copied from assignment)
+
+mcibaseline_df = read_csv(file = "data/MCI_baseline.csv",
+                                skip = 1,
+                                na = c("", "NA", "."))#cleans missing data
+
+mcibaseline_df = janitor::clean_names(mcibaseline_df)#convert to snake case
+
+mcibaseline_tidy <- mcibaseline_df |> 
+  # 1. Remove participants who already had MCI at baseline
+  filter(is.na(age_at_onset) | age_at_onset > current_age) |> 
+  # 2. Convert sex and apoe4 numeric codes into categorical factors
+  mutate(
+    sex = factor(sex, levels = c(0, 1), labels = c("Female", "Male")),
+    apoe4 = factor(apoe4, levels = c(0, 1), labels = c("Non-carrier", "Carrier"))
+  )
+
+mcibaseline_tidy#checks if above lines ran properly
+```
+## Discussion: 
+There were several key steps when importing this dataset. First is realizing that the first row should be skipped because it doesn't contain column names but variable key instead. After which you go through the tidying steps of converting missing data to 'na', and standardizing variable names into snakecase. Then you go on to filter those who do not have MCI at  baseline before converting sex and apoe4 from 'double' into 'categoricals'. We could probably do logical but the standard is categoricals and it's easier to read/interpret as well. 
+
+`r nrow(mcibaseline_df)` were recruited while `r nrow(mcibaseline_tidy)` develop MCI. The average baseline age is `r mcibaseline_tidy |> mean(current_age)` while the proportion of women in the study who are APOE4 carriers is `r mcibaseline_tidy |> filter(sex == "Female") |> summarize(p = mean(apoe4 == "Carrier")) |> pull(p) |> round(3)`.
 
 
 
