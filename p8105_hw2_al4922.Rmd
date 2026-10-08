@@ -7,22 +7,57 @@ date: "2026-10-06"
 ```{r setup}
 library(tidyverse)
 ```
+
+### Problem 1
+
+**Step 1: Import and Clean Dataset**
 ```{r read_csv}
+##Read and clean the data (copied from assignment)
+
 nytransit_df = read_csv(file = "data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
-                                na = c("", "NA", "."),#imports data
-                                col_types = cols(`entry` = col_logical()
-                                                 ))
+                                na = c("", "NA", ".")) #cleans missing data
 
 names(nytransit_df)#overview of all variables
 
 nytransit_df = janitor::clean_names(nytransit_df)#convert to snake case
 names(nytransit_df)#checks if above line ran properly
 ```
-```{r checking_data}
+Double checking to see if cleaning data done properly:
+```{r checking_data2}
 nytransit_df
 ```
+
+**Step 2: Data Manipulation**
 ```{r select}
-select(line, station_name, station_latitude, station_longtitude
+##retain line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. Convert the entry variable from character to a logical variable 
+
+nytransit_df = 
+  nytransit_df |> 
+  select(line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, vending, entrance_type, ada) |>
+mutate(
+    entry = recode_values(
+      tolower(entry),  # to lower handles mixed case like "NO" or "Yes"
+      "yes" ~ TRUE,
+      "no"  ~ FALSE,
+    ) #recode_values used instead of case_match to fix warning that came up
+  )
+```
+Double checking to see if data manipulation done properly:
+```{r checking_data}
+nytransit_df #entry successfully converted to logical variable, all intended columns kept, the tibble is now 1868 by 19 (rows by columns)
+```
+**About this Dataset:**
+(Q: Write a short paragraph about this dataset – explain briefly what variables the dataset contains, describe your data cleaning steps so far, and give the dimension (rows x columns) of the resulting dataset. Are these data tidy?)
+
+This data set (nytransit_df) has the following variables:line, station name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. We first read and tidied the data and then manipulated it so only the desired columns as mentioned were kept as well as converting the 'entry' variables from characters to logical variables. The dataset was cleaned in three steps, first is converting any missing data to 'NA', then using the janitor function to standardize column numbes into snakecase and finally checking the resulting tibble to see if rows need to be skipped to find there were none. The dimension as mentioned in the last checking step is 1868 by 19 (1868 rows or entries by 19 columns or variables). The data is tidy based on all the steps done above. 
+
+**Step 3: info retrieval**
+```{retrieval r}
+
+
+
+
+
 
 
 
