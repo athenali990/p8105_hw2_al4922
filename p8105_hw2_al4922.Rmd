@@ -4,8 +4,9 @@ output: github_document
 date: "2026-10-06"
 ---
 
-```{r setup}
+```{r setup, include=FALSE}
 library(tidyverse)
+library(readxl)
 ```
 
 ### Problem 1
@@ -71,7 +72,7 @@ nytransit_df |>
   filter(vending == "NO") |> 
   summarize(mean(entry))
 ```
-## Answer the following questions with step 3: 
+**Answer the following questions with step 3:**
 How many distinct stations are there? 
 There are 465 distinct stations.
 
@@ -80,6 +81,102 @@ How many stations are ADA compliant?
 
 What proportion of station entrances / exits without vending allow entrance?
 About 0.3770 or 37.70% of station entrances/exits without vending allow entrance. 
+
+**Step 4: data reformatting**
+```{r reformat}
+# 1. Reformat data: convert all route columns to character first, then pivot
+nytransit_tidy <- nytransit_df |> 
+  mutate(across(route1:route11, as.character)) |> 
+  pivot_longer(
+    cols = route1:route11,
+    names_to = "route_number",
+    names_prefix = "route",
+    values_to = "route_name",
+    values_drop_na = TRUE
+  )
+
+# 2. How many distinct stations serve the A train?
+a_train_stations <- nytransit_tidy |> 
+  filter(route_name == "A") |> 
+  distinct(station_name, line) |> 
+  nrow()
+
+a_train_stations
+
+# 3. Of the stations that serve the A train, how many are ADA compliant?
+a_train_ada_stations <- nytransit_tidy |> 
+  filter(route_name == "A", ada == TRUE) |> 
+  distinct(station_name, line) |> 
+  nrow()
+
+print(a_train_ada_stations)
+
+```
+**Reformatted data interpretation:**
+60 distinct stations serve the A train and of stations that serve the A train, 17 are ADA compliant. 
+
+
+### Problem 2
+
+**Step 1: Read and clean Mr. Trash Wheel Sheet:**
+```{r import}
+#Read and clean the Mr. Trash Wheel sheet:specify the sheet in the Excel file and to omit non-data entries (rows with notes / figures; columns containing notes) using arguments in read_excel, use reasonable variable names, omit rows that do not include dumpster-specific data, round the number of sports balls to the nearest integer and converts the result to an integer variable (using as.integer) (copied from assignment)
+
+mrtw_df = read_excel("data/202610 Trash Wheel Collection Data.xlsx",
+                     sheet = "Mr. Trash Wheel",
+                     range = "A2:N742",
+                     na = c("", "NA", "."))|>
+  janitor::clean_names() |>
+  mutate(sports_balls = as.integer(round(sports_balls)),
+         trash_wheel = "Mr. Trash Wheel",
+         year = as.numeric(year),
+         plastic_bottles = as.numeric(plastic_bottles)
+         )
+
+mrtw_df #this is to check for non-data entries, we see a '...15' and '...16' columns which should be ommitted, we also see that the last row doesn't include dumpster-specific data (These 'issues' are now fixed, we also have a clean dataset)
+```
+**Step 2: Read and clean Prof. Trash Wheeland Gwynnda Sheet:**
+```{r import2}
+#Use a similar process to import, clean, and organize the data for Professor Trash Wheel and Gwynnda (copied from assignment)
+
+proftw_df = read_excel("data/202610 Trash Wheel Collection Data.xlsx",
+                     sheet = "Professor Trash Wheel",
+                     range = "A2:M139",
+                     na = c("", "NA", "."))|>
+  janitor::clean_names() |>
+  mutate(
+    trash_wheel = "Professor Trash Wheel",
+    year = as.numeric(year),
+    plastic_bottles = as.numeric(plastic_bottles)
+  )
+
+proftw_df #this is to check cleanliness of df,prof tw has no sports_balls column as a note
+
+gwynnda_df = read_excel("data/202610 Trash Wheel Collection Data.xlsx",
+                     sheet = "Gwynnda the Good Wheel of the W",
+                     range = "A2:L394",
+                     na = c("", "NA", "."))|>
+  janitor::clean_names() |>
+  mutate(
+    trash_wheel = "Gwynnda",
+    year = as.numeric(year),
+    plastic_bottles = as.numeric(plastic_bottles)
+  )
+
+gwynnda_df #this is to check cleanliness of df,gwynnda has no sports_balls column as a note
+```
+
+**Step 3: Combine the three datasets**
+```{r combine}
+#To keep track of which Trash Wheel is which, you may need to add an additional variable to both datasets before combining. This new variable is trash_wheel. 
+tw_tidy <- bind_rows(mrtw_df, proftw_df, gwynnda_df) |>
+  relocate(trash_wheel)
+
+#View combined dataset
+tw_tidy #shows a tidied, combined dataset with the variable #trash_wheel showing which dumpster the data belonged to
+```
+  
+
 
 
 
