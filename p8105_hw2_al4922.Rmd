@@ -31,7 +31,7 @@ nytransit_df
 ```{r select}
 ##retain line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. Convert the entry variable from character to a logical variable 
 
-nytransit_df = 
+nytransit_df <- 
   nytransit_df |> 
   select(line, station_name, station_latitude, station_longitude, route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, entry, vending, entrance_type, ada) |>
 mutate(
@@ -52,8 +52,34 @@ nytransit_df #entry successfully converted to logical variable, all intended col
 This data set (nytransit_df) has the following variables:line, station name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. We first read and tidied the data and then manipulated it so only the desired columns as mentioned were kept as well as converting the 'entry' variables from characters to logical variables. The dataset was cleaned in three steps, first is converting any missing data to 'NA', then using the janitor function to standardize column numbes into snakecase and finally checking the resulting tibble to see if rows need to be skipped to find there were none. The dimension as mentioned in the last checking step is 1868 by 19 (1868 rows or entries by 19 columns or variables). The data is tidy based on all the steps done above. 
 
 **Step 3: info retrieval**
-```{retrieval r}
+```{r retrieval}
+#counting distinct stations in nytransit_df
+distinct_stations <- nytransit_df |> 
+  distinct(station_name, line) |> 
+  nrow()
 
+distinct_stations
+
+ada_stations <- nytransit_df |> 
+  filter(ada == TRUE) |>   
+  distinct(station_name, line) |> 
+  nrow()
+
+ada_stations
+
+nytransit_df |> 
+  filter(vending == "NO") |> 
+  summarize(mean(entry))
+```
+## Answer the following questions with step 3: 
+How many distinct stations are there? 
+There are 465 distinct stations.
+
+How many stations are ADA compliant?
+84 stations are ADA compliant.
+
+What proportion of station entrances / exits without vending allow entrance?
+About 0.3770 or 37.70% of station entrances/exits without vending allow entrance. 
 
 
 
