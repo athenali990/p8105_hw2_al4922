@@ -227,10 +227,45 @@ mcibaseline_tidy <- mcibaseline_df |>
 mcibaseline_tidy#checks if above lines ran properly
 ```
 ## Discussion: 
-There were several key steps when importing this dataset. First is realizing that the first row should be skipped because it doesn't contain column names but variable key instead. After which you go through the tidying steps of converting missing data to 'na', and standardizing variable names into snakecase. Then you go on to filter those who do not have MCI at  baseline before converting sex and apoe4 from 'double' into 'categoricals'. We could probably do logical but the standard is categoricals and it's easier to read/interpret as well. 
+There were several key steps when importing this dataset. First is realizing that the first row should be skipped because it doesn't contain column names but variable key instead. After which you go through the tidying steps of converting missing data to 'na', and standardizing variable names into snakecase. Then you go on to filter those who do not have MCI at  baseline before converting sex and apoe4 from 'double' into 'categoricals'. We could probably do logical but the standard is categoricals and it's easier to read/interpret as well. `r nrow(mcibaseline_df)` were recruited while `r nrow(mcibaseline_tidy)` develop MCI. The average baseline age is `r mcibaseline_tidy |> mean(current_age)` while the proportion of women in the study who are APOE4 carriers is `r mcibaseline_tidy |> filter(sex == "Female") |> summarize(p = mean(apoe4 == "Carrier")) |> pull(p) |> round(3)`.
 
-`r nrow(mcibaseline_df)` were recruited while `r nrow(mcibaseline_tidy)` develop MCI. The average baseline age is `r mcibaseline_tidy |> mean(current_age)` while the proportion of women in the study who are APOE4 carriers is `r mcibaseline_tidy |> filter(sex == "Female") |> summarize(p = mean(apoe4 == "Carrier")) |> pull(p) |> round(3)`.
+**Step 2: Import and Clean Dataset 2 electric boogaloo**
+```{r read_csvmci2}
+##Similarly, import, clean, and tidy the dataset of longitudinally observed biomarker values; comment on the steps on the import process and the features of the dataset.
 
+mciamy_df = read_csv(file = "data/mci_amyloid.csv",
+                                skip = 1,
+                                na = c("", "NA", "."))#cleans missing data
+
+mciamy_tidy = janitor::clean_names(mciamy_df)#convert to snake case
+
+mciamy_tidy# Shows first row skipped so that the actual column names can become first row and also converted everything to snakecase
+```
+**Step 3: Parse and combine the datasets!**
+```{r combine3}
+#1. Check who's only in baseline and who's only in amyloid datasets
+only_baseline <- anti_join(mcibaseline_tidy, mciamy_tidy, by = c("id" = "study_id"))
+only_amyloid  <- anti_join(mciamy_tidy, mcibaseline_tidy, by = c("study_id" = "id"))
+
+#Print counts of non-matching people
+nrow(only_baseline)
+nrow(only_amyloid)
+
+#2. Combine the datasets (only participants in both kept)
+mci_combined <- inner_join(
+  mcibaseline_tidy, 
+  mciamy_tidy, 
+  by = c("id" = "study_id")
+)
+
+mci_combined #this is to give the combined dataset a good lookover
+
+#3. Export result to csv!
+write_csv(mci_combined, "data/mci_combined.csv")
+```
+## Final Discussion: 
+
+Using the antijoin function, we could parse out participants who only appeared in either the baseline dataset `r nrow(only_baseline)` or the amyloid dataset `r nrow(only_amyloid)`. Since such participants existed, the inner join function was used to join the two datasets so that only the rows that have matching values according to the study_id were kept. The resulting combined tibble contains `r ncol(mci_combined)` columns and `r nrow(mci_combined)` rows. The columns start with the baseline dataset's variables on the left before going into the amyloid dataset without repeating the study_id column which would be redundant. The number of retained participants is `r nrow(mci_combined)`. Compared to the `r nrow(mcibaseline_tidy)` observations from baseline and `r nrow(mciamy_tidy)`, we see that `r nrow(mcibaseline_tidy) - nrow(mci_combined)` and `r nrow(mciamy_tidy) - nrow(mci_combined)` have been deleted for the combination, respectively. 
 
 
   
